@@ -1,62 +1,95 @@
-// Fetch data from API//
+const ENDPOINT = "https://melon-potent-period.glitch.me/skills";
 
-fetch("https://melon-potent-period.glitch.me/skills")
+// Fetch and display data from API//
+
+fetch(ENDPOINT)
   .then((response) => response.json())
   .then((data) => {
     const skillsTable = document.getElementById("skillsTable");
+
     data.forEach((skill) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-          <td>${skill.id}</td>
-          <td>${skill.skill}</td>
-          <td><button onclick="deleteSkill(${skill.id})">Delete</button></td>
-        `;
+      const row = createSkillRow(skill);
       skillsTable.appendChild(row);
+    });
+
+    // Add skill from user's input//
+
+    const addSkillForm = document.getElementById("add-skill");
+    addSkillForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const skillName = document.getElementById("skill").value;
+
+      const newSkill = { skill: skillName };
+
+      fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newSkill),
+      })
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            throw new Error("Failed to add skill");
+          }
+        })
+        .then((skill) => {
+          const row = createSkillRow(skill);
+          skillsTable.appendChild(row);
+        })
+        .catch((error) => console.error(error));
     });
   })
   .catch((error) => console.error(error));
 
-// Add skill from user's input //
+//Create skill in HTML function //
 
-const addSkillForm = document.getElementById("add-skill");
+function createSkillRow(skill) {
+  const row = document.createElement("tr");
+  const idCell = document.createElement("td");
+  const skillCell = document.createElement("td");
+  const actionCell = document.createElement("td");
+  const deleteLink = document.createElement("a");
 
-addSkillForm.addEventListener("submit", function (event) {
-  event.preventDefault();
+  idCell.textContent = skill.id;
+  skillCell.textContent = skill.skill;
 
-  const skillInput = document.getElementById("skill");
-  const newSkill = skillInput.value;
+  deleteLink.textContent = "delete";
+  deleteLink.href = "#";
+  deleteLink.addEventListener("click", (event) => {
+    event.preventDefault();
 
-  fetch("https://melon-potent-period.glitch.me/skills", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ skill: newSkill }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      const skillsTable = document.getElementById("skillsTable");
-      const row = document.createElement("tr");
-      row.innerHTML = `
-      <td>${data.id}</td>
-      <td>${data.skill}</td>
-      <td><button onclick="deleteSkill(${data.id})">Delete</button></td>
-    `;
-      skillsTable.appendChild(row);
+    fetch(`https://melon-potent-period.glitch.me/skill/${skill.id}`, {
+      method: "DELETE",
     })
-    .catch((error) => console.error(error));
-});
+      .then((response) => {
+        if (response.ok) {
+          row.remove();
+        } else {
+          throw new Error("Failed to delete skill");
+        }
+      })
+      .catch((error) => console.error(error));
+  });
 
-// Delete skill//
+  actionCell.appendChild(deleteLink);
+
+  row.appendChild(idCell);
+  row.appendChild(skillCell);
+  row.appendChild(actionCell);
+
+  return row;
+}
 
 //BUTTONS//
 
-const addButton = document.getElementById("add");
-addButton.addEventListener("click", function () {
-  window.open("add.html", "_blank");
-});
+// const addSkillButton = document.getElementById("add");
+// addSkillButton.addEventListener("click", () => {
+//   window.open("add.html", "_blank");
+// });
 
-const backButton = document.getElementById("backButton");
-backButton.addEventListener("click", function () {
-  history.back();
-});
+// const backButton = document.getElementById("backButton");
+// backButton.addEventListener("click", () => {
+//   window.location.href = "index.html";
+// });
